@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindaNow — Discover Mindanao</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root {
+    --forest: #1a3a2a;
+    --emerald: #2d6a4f;
+    --lime: #74c69d;
+    --sand: #f4e9d8;
+    --ochre: #d4a253;
+    --rust: #c25e35;
+    --cream: #fdf8f2;
+    --charcoal: #1c1c1c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    overflow-x: hidden;
+}
+
+/* navbar */
+.navbar {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: rgba(26,58,42,0.95);
+    backdrop-filter: blur(12px);
+}
+.logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem; letter-spacing: 3px;
+    color: var(--lime);
+}
+.logo span { color: var(--ochre); }
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+.nav-links a {
+    color: rgba(255,255,255,0.8); text-decoration: none;
+    font-size: 0.85rem; font-weight: 500; letter-spacing: 1px;
+    text-transform: uppercase; transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--lime); }
+.nav-cta {
+    background: var(--ochre); color: var(--forest);
+    padding: 0.5rem 1.4rem; border-radius: 2px;
+    font-weight: 600; font-size: 0.8rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; border: none;
+    transition: background 0.2s;
+}
+.nav-cta:hover { background: var(--lime); }
+
+/* hero */
+.hero {
+    position: relative; height: 100vh;
+    background: linear-gradient(160deg, var(--forest) 0%, #0d2416 100%);
+    display: flex; align-items: center; overflow: hidden;
+}
+.hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 70% 60%, rgba(45,106,79,0.4) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 20% 80%, rgba(116,198,157,0.12) 0%, transparent 50%);
+}
+.hero-grain {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.hero-content {
+    position: relative; z-index: 2;
+    padding: 0 3rem; max-width: 700px;
+    animation: fadeUp 1s ease forwards;
+}
+.hero-tag {
+    display: inline-block;
+    background: rgba(116,198,157,0.15); border: 1px solid rgba(116,198,157,0.3);
+    color: var(--lime); font-size: 0.75rem; letter-spacing: 3px;
+    text-transform: uppercase; padding: 0.4rem 1rem; border-radius: 1px;
+    margin-bottom: 1.5rem;
+}
+.hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 7vw, 6rem);
+    font-weight: 900; line-height: 1.0;
+    color: #fff; margin-bottom: 1.5rem;
+}
+.hero h1 em { color: var(--ochre); font-style: italic; }
+.hero p {
+    color: rgba(255,255,255,0.65); font-size: 1.1rem;
+    line-height: 1.7; max-width: 480px; margin-bottom: 2.5rem;
+}
+.hero-btns { display: flex; gap: 1rem; align-items: center; }
+.btn-primary {
+    background: var(--ochre); color: var(--forest);
+    padding: 0.9rem 2rem; font-weight: 700;
+    font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;
+    border: none; cursor: pointer; border-radius: 2px;
+    transition: transform 0.2s, background 0.2s;
+}
+.btn-primary:hover { background: var(--lime); transform: translateY(-2px); }
+.btn-outline {
+    background: transparent; color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 0.9rem 2rem; font-weight: 500;
+    font-size: 0.9rem; letter-spacing: 1px;
+    cursor: pointer; border-radius: 2px; transition: border-color 0.2s, color 0.2s;
+}
+.btn-outline:hover { border-color: var(--lime); color: var(--lime); }
+.hero-scroll {
+    position: absolute; bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.4); font-size: 0.7rem;
+    letter-spacing: 3px; text-transform: uppercase;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+}
+.scroll-line {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+    animation: pulse 2s ease-in-out infinite;
+}
+.hero-visual {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 45%;
+    display: flex; align-items: center; justify-content: center;
+}
+.island-silhouette {
+    width: 90%; opacity: 0.18;
+    animation: float 6s ease-in-out infinite;
+}
+
+/* search bar */
+.search-bar {
+    background: #fff;
+    border-radius: 4px;
+    padding: 2rem 3rem;
+    margin: -3.5rem 3rem 0;
+    position: relative; z-index: 10;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    display: flex; gap: 1rem; align-items: center;
+}
+.search-input {
+    flex: 1; display: flex; align-items: center; gap: 0.8rem;
+    border: 1.5px solid #e5e0d8; border-radius: 2px; padding: 0.8rem 1.2rem;
+}
+.search-input input {
+    border: none; outline: none; font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; color: var(--charcoal); width: 100%;
+    background: transparent;
+}
+.search-input input::placeholder { color: #aaa; }
+.search-icon { color: #aaa; font-size: 1rem; }
+.search-divider { width: 1px; height: 40px; background: #e5e0d8; }
+
+/* select wrapper */
+.select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1.5px solid #e5e0d8;
+    border-radius: 2px;
+    padding: 0.8rem 1.2rem;
+    background: #fff;
+}
+.select-wrapper i {
+    color: var(--emerald);
+    font-size: 0.9rem;
+}
+.select-wrapper .category-select {
+    border: none;
+    padding: 0;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    background: transparent;
+    cursor: pointer;
+    min-width: 140px;
+}
+.search-btn {
+    background: var(--forest); color: #fff;
+    border: none; padding: 0.85rem 2rem; border-radius: 2px;
+    font-weight: 600; font-size: 0.9rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; transition: background 0.2s;
+    white-space: nowrap; display: flex; align-items: center; gap: 0.5rem;
+}
+.search-btn:hover { background: var(--emerald); }
+
+/* categories */
+.section { padding: 5rem 3rem; }
+.section-label {
+    font-size: 0.72rem; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--emerald); font-weight: 600; margin-bottom: 0.6rem;
+}
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 700;
+    color: var(--forest); line-height: 1.2; margin-bottom: 3rem;
+}
+.categories-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+}
+.cat-pill {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.7rem 1.4rem; border-radius: 100px;
+    border: 1.5px solid #ddd; cursor: pointer;
+    font-size: 0.88rem; font-weight: 500;
+    transition: all 0.2s; background: #fff;
+}
+.cat-pill.active {
+    background: var(--forest); color: #fff; border-color: var(--forest);
+}
+.cat-pill:not(.active):hover { border-color: var(--emerald); color: var(--emerald); }
+.cat-icon { font-size: 1.1rem; }
+.cat-pill i { color: var(--emerald); }
+.cat-pill.active i { color: #fff; }
+
+/* destinations grid */
+.dest-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+}
+.dest-card {
+    border-radius: 4px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: #fff; cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+.dest-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.14); }
+.dest-card.featured { grid-column: span 2; grid-row: span 2; }
+.card-img-placeholder {
+    width: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+}
+.dest-card:not(.featured) .card-img-placeholder { height: 200px; }
+.dest-card.featured .card-img-placeholder { height: 380px; min-height: 380px; }
+.card-badge {
+    position: absolute; top: 1rem; left: 1rem;
+    background: var(--ochre); color: var(--forest);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 0.3rem 0.7rem; border-radius: 1px;
+}
+.card-body { padding: 1.3rem 1.5rem 1.6rem; }
+.card-loc {
+    font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--emerald); font-weight: 600; margin-bottom: 0.4rem;
+}
+.card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 700; color: var(--forest);
+    margin-bottom: 0.5rem; line-height: 1.3;
+}
+.dest-card.featured .card-title { font-size: 1.6rem; }
+.card-desc {
+    font-size: 0.85rem; color: #666; line-height: 1.6;
+    overflow: hidden;
+}
+.card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f0ebe3;
+}
+.card-meta { font-size: 0.78rem; color: #999; }
+.card-arrow {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--sand); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1rem; transition: background 0.2s;
+}
+.card-arrow:hover { background: var(--lime); }
+
+/* map section */
+.map-section {
+    background: var(--forest);
+    padding: 5rem 3rem;
+    position: relative; overflow: hidden;
+}
+.map-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 80% 50%, rgba(45,106,79,0.5), transparent);
+}
+.map-inner {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+}
+.map-text .section-label { color: var(--lime); }
+.map-text .section-title { color: #fff; }
+.map-text p { color: rgba(255,255,255,0.65); line-height: 1.8; margin-bottom: 2rem; font-size: 0.95rem; }
+.map-features { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem; }
+.map-feat {
+    display: flex; align-items: center; gap: 1rem;
+    color: rgba(255,255,255,0.8); font-size: 0.9rem;
+}
+.feat-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--lime); flex-shrink: 0;
+}
+.map-preview {
+    background: rgba(0,0,0,0.3); border-radius: 6px;
+    border: 1px solid rgba(116,198,157,0.2);
+    height: 380px; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+}
+.map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(116,198,157,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(116,198,157,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+.map-placeholder-text {
+    color: rgba(255,255,255,0.3); font-size: 0.85rem;
+    letter-spacing: 2px; text-transform: uppercase; text-align: center;
+}
+.map-dot {
+    position: absolute; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--ochre);
+    box-shadow: 0 0 0 4px rgba(212,162,83,0.3);
+    cursor: pointer; animation: ping 2s ease infinite;
+}
+.map-dot:nth-child(2) { top: 35%; left: 45%; animation-delay: 0.3s; }
+.map-dot:nth-child(3) { top: 55%; left: 62%; background: var(--lime); box-shadow: 0 0 0 4px rgba(116,198,157,0.3); animation-delay: 0.6s; }
+.map-dot:nth-child(4) { top: 65%; left: 35%; animation-delay: 0.9s; }
+.map-dot:nth-child(5) { top: 25%; left: 70%; background: var(--rust); box-shadow: 0 0 0 4px rgba(194,94,53,0.3); animation-delay: 1.2s; }
+.map-tooltip {
+    position: absolute; top: 28%; left: 46%;
+    background: #fff; border-radius: 4px; padding: 0.7rem 1rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    font-size: 0.8rem; color: var(--charcoal);
+    white-space: nowrap; pointer-events: none;
+}
+.map-tooltip strong { display: block; color: var(--forest); margin-bottom: 0.2rem; font-size: 0.85rem; }
+.map-tooltip::before {
+    content: ''; position: absolute; bottom: -6px; left: 12px;
+    border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-top: 6px solid #fff;
+}
+
+/* gallery */
+.gallery-section { padding: 5rem 3rem; }
+.gallery-grid {
+    display: grid; gap: 0.8rem; margin-top: 2.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 180px 180px;
+}
+.gallery-item {
+    border-radius: 3px; overflow: hidden; cursor: pointer;
+    position: relative; transition: transform 0.3s;
+}
+.gallery-item:hover { transform: scale(1.02); }
+.gallery-item:first-child { grid-column: span 2; grid-row: span 2; }
+.gallery-thumb {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; position: relative;
+}
+.gallery-thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+}
+.g1 { background: linear-gradient(135deg, #1a3a2a 0%, #2d6a4f 100%); }
+.g2 { background: linear-gradient(135deg, #1a2e4a 0%, #2a4d6e 100%); }
+.g3 { background: linear-gradient(135deg, #3a2010 0%, #6e4020 100%); }
+.g4 { background: linear-gradient(135deg, #2a3a10 0%, #4e6e20 100%); }
+.g5 { background: linear-gradient(135deg, #2a1040 0%, #4e2e70 100%); }
+
+/* cuisine */
+.cuisine-section { background: var(--sand); padding: 5rem 3rem; }
+.cuisine-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.2rem; margin-top: 3rem; }
+.cuisine-card {
+    background: #fff; border-radius: 4px; overflow: hidden;
+    text-align: center; padding: 2rem 1rem 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+}
+.cuisine-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.cuisine-emoji { font-size: 2.8rem; margin-bottom: 0.8rem; display: block; }
+.cuisine-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 700; color: var(--forest); margin-bottom: 0.4rem;
+}
+.cuisine-origin { font-size: 0.75rem; color: #999; letter-spacing: 1px; text-transform: uppercase; }
+
+/* events */
+.events-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+.event-card {
+    border-left: 3px solid var(--ochre); padding: 1.5rem;
+    background: #fff; border-radius: 0 4px 4px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+}
+.event-card:hover { border-color: var(--emerald); transform: translateX(4px); }
+.event-date {
+    font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--rust); font-weight: 600; margin-bottom: 0.5rem;
+}
+.event-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; font-weight: 700; color: var(--forest); margin-bottom: 0.4rem;
+}
+.event-loc { font-size: 0.82rem; color: #888; }
+
+/* advisories */
+.advisory-section { background: #fff5ee; padding: 4rem 3rem; }
+.advisory-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+.advisory-item {
+    display: flex; gap: 1.2rem; align-items: flex-start;
+    padding: 1.2rem 1.5rem; background: #fff; border-radius: 4px;
+    border-left: 3px solid var(--rust);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+}
+.advisory-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 0.1rem; }
+.advisory-title { font-weight: 600; color: var(--charcoal); margin-bottom: 0.2rem; font-size: 0.92rem; }
+.advisory-desc { font-size: 0.82rem; color: #777; line-height: 1.6; }
+
+/* feedback */
+.feedback-section { padding: 5rem 3rem; background: var(--cream); }
+.feedback-inner { max-width: 600px; margin: 0 auto; text-align: center; }
+.feedback-form { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1rem; text-align: left; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-field label { font-size: 0.78rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #888; }
+.form-field input, .form-field textarea {
+    padding: 0.8rem 1rem; border: 1.5px solid #e5e0d8;
+    border-radius: 2px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; color: var(--charcoal);
+    background: #fff; transition: border-color 0.2s; outline: none;
+}
+.form-field input:focus, .form-field textarea:focus { border-color: var(--emerald); }
+.form-field textarea { resize: vertical; min-height: 120px; }
+.submit-btn {
+    background: var(--forest); color: #fff;
+    padding: 1rem; border: none; border-radius: 2px;
+    font-weight: 700; font-size: 0.9rem; letter-spacing: 1.5px;
+    text-transform: uppercase; cursor: pointer; transition: background 0.2s;
+}
+.submit-btn:hover { background: var(--emerald); }
+
+/* footer */
+footer {
+    background: var(--charcoal); color: rgba(255,255,255,0.5);
+    padding: 3rem 3rem 2rem;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
+}
+.footer-brand .logo { margin-bottom: 1rem; display: block; }
+.footer-brand p { font-size: 0.82rem; line-height: 1.7; max-width: 260px; }
+.footer-col h4 {
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,255,255,0.8); margin-bottom: 1rem; font-weight: 600;
+}
+.footer-col a {
+    display: block; color: rgba(255,255,255,0.45);
+    text-decoration: none; font-size: 0.83rem; margin-bottom: 0.5rem;
+    transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--lime); }
+.footer-bottom {
+    background: var(--charcoal); padding: 1rem 3rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.78rem; color: rgba(255,255,255,0.25);
+    display: flex; justify-content: space-between;
+}
+
+/* animations */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+@keyframes ping {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="logo">Minda<span>Now</span></div>
+    <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Destinations</a></li>
+        <li><a href="#">Map</a></li>
+        <li><a href="#">Cuisine</a></li>
+        <li><a href="#">Events</a></li>
+        <li><a href="#">Advisories</a></li>
+    </ul>
+    <button class="nav-cta">Explore Now</button>
+</nav>
+
+<!-- hero -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grain"></div>
+    <div class="hero-content">
+        <div class="hero-tag">Discover Mindanao</div>
+        <h1>The <em>Soul</em><br>of the South</h1>
+        <p>Your ultimate guide to Mindanao's best destinations, culture, and hidden gems.</p>
+        <div class="hero-btns">
+            <button class="btn-primary">Browse Destinations</button>
+            <button class="btn-outline"><i class="fa-solid fa-map"></i> Explore Map</button>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <svg class="island-silhouette" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="200" cy="200" rx="160" ry="80" fill="#74c69d"/>
+            <path d="M100 200 Q130 140 160 160 Q180 100 200 120 Q220 80 250 110 Q280 90 300 200Z" fill="#2d6a4f"/>
+            <path d="M200 120 L200 40 Q195 80 185 100Z" fill="#1a3a2a"/>
+            <ellipse cx="185" cy="38" rx="18" ry="12" fill="#2d6a4f"/>
+        </svg>
+    </div>
+    <div class="hero-scroll">
+        <span>Scroll</span>
+        <div class="scroll-line"></div>
+    </div>
+</section>
+
+<!-- search bar -->
+<div class="search-bar">
+    <div class="search-input" style="flex:2">
+        <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" placeholder="Search destinations, places, attractions...">
+    </div>
+    <div class="search-divider"></div>
+    <div class="select-wrapper">
+        <i class="fa-solid fa-filter"></i>
+        <select class="category-select">
+            <option><i class="fa-solid fa-star"></i> All Categories</option>
+            <option><i class="fa-solid fa-umbrella-beach"></i> Beach</option>
+            <option><i class="fa-solid fa-mountain"></i> Mountain</option>
+            <option><i class="fa-solid fa-landmark"></i> Cultural</option>
+            <option><i class="fa-solid fa-leaf"></i> Nature</option>
+            <option><i class="fa-solid fa-water"></i> Waterfalls</option>
+        </select>
+    </div>
+    <button class="search-btn">
+        <i class="fa-solid fa-magnifying-glass"></i> Search
+    </button>
+</div>
+
+<!-- categories -->
+<section class="section">
+    <div class="section-label">Browse By Type</div>
+    <div class="section-title">Explore All Destination Types</div>
+    <div class="categories-row">
+        <div class="cat-pill active"><span class="cat-icon"><i class="fa-solid fa-star"></i></span> All</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-umbrella-beach"></i></span> Beaches</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-mountain"></i></span> Mountains</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-leaf"></i></span> Nature</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-landmark"></i></span> Cultural</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-water"></i></span> Waterfalls</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-city"></i></span> City</div>
+        <div class="cat-pill"><span class="cat-icon"><i class="fa-solid fa-masks-theater"></i></span> Festivals</div>
+    </div>
+
+    <!-- destination grid -->
+    <div class="dest-grid">
+
+        <!-- featured -->
+        <div class="dest-card featured">
+            <div class="card-img-placeholder g1"><span>🌊</span></div>
+            <div class="card-badge"><i class="fa-solid fa-star"></i> Featured</div>
+            <div class="card-body">
+                <div class="card-loc"><i class="fa-solid fa-location"></i> Sarangani Province</div>
+                <div class="card-title">Gumasa Beach — The White Sand Paradise</div>
+                <div class="card-desc">One of Mindanao's finest white sand beaches, featuring crystal clear waters and pristine shorelines perfect for island hopping and snorkeling adventures.</div>
+                <div class="card-footer">
+                    <span class="card-meta"><i class="fa-solid fa-umbrella-beach"></i> Beach · Best: Mar–May</span>
+                    <button class="card-arrow">→</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- card 2 -->
+        <div class="dest-card">
+            <div class="card-img-placeholder g2"><span>🌋</span></div>
+            <div class="card-badge"><i class="fa-solid fa-fire"></i> Popular</div>
+            <div class="card-body">
+                <div class="card-loc"><i class="fa-solid fa-location"></i> Cotabato City</div>
+                <div class="card-title">Mount Apo — Highest Peak</div>
+                <div class="card-desc">Philippines' highest mountain and sacred landmark, offering challenging treks through lush forests.</div>
+                <div class="card-footer">
+                    <span class="card-meta"><i class="fa-solid fa-mountain"></i> Mountain</span>
+                    <button class="card-arrow">→</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- card 3 -->
+        <div class="dest-card">
+            <div class="card-img-placeholder g3"><span>🌺</span></div>
+            <div class="card-body">
+                <div class="card-loc"><i class="fa-solid fa-location"></i> Davao City</div>
+                <div class="card-title">Eden Nature Park</div>
+                <div class="card-desc">A cool highland retreat offering panoramic views, lush gardens, and eco-adventure activities.</div>
+                <div class="card-footer">
+                    <span class="card-meta"><i class="fa-solid fa-leaf"></i> Nature</span>
+                    <button class="card-arrow">→</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- card 4 -->
+        <div class="dest-card">
+            <div class="card-img-placeholder g4"><span>🏯</span></div>
+            <div class="card-body">
+                <div class="card-loc"><i class="fa-solid fa-location"></i> Zamboanga City</div>
+                <div class="card-title">Fort Pilar Shrine</div>
+                <div class="card-desc">A 17th-century Spanish colonial fort turned religious shrine and regional museum.</div>
+                <div class="card-footer">
+                    <span class="card-meta"><i class="fa-solid fa-landmark"></i> Cultural</span>
+                    <button class="card-arrow">→</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- card 5 -->
+        <div class="dest-card">
+            <div class="card-img-placeholder g5"><span>💧</span></div>
+            <div class="card-body">
+                <div class="card-loc"><i class="fa-solid fa-location"></i> Bukidnon</div>
+                <div class="card-title">Limunsudan Falls</div>
+                <div class="card-desc">Tallest waterfall in the Philippines, a hidden gem deep within the Mindanao forest.</div>
+                <div class="card-footer">
+                    <span class="card-meta"><i class="fa-solid fa-water"></i> Waterfall</span>
+                    <button class="card-arrow">→</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- interactive map -->
+<section class="map-section">
+    <div class="map-inner">
+        <div class="map-text">
+            <div class="section-label">Interactive Map</div>
+            <div class="section-title" style="color:#fff">Explore Mindanao<br>Geographically</div>
+            <button class="btn-primary">Open Full Map →</button>
+        </div>
+        <div class="map-preview">
+            <div id="mindanao-map" style="width:100%; height:380px; border-radius:6px;"></div>
+            </div>
+            <div class="map-placeholder-text" style="position:absolute;bottom:1.5rem;width:100%;text-align:center">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- gallery -->
+<section class="gallery-section">
+    <div class="section-label">Visual Gallery</div>
+    <div class="section-title">Mindanao in<br>Full Color</div>
+    <div class="gallery-grid">
+        <div class="gallery-item"><div class="gallery-thumb g1"></div></div>
+        <div class="gallery-item"><div class="gallery-thumb g2"></div></div>
+        <div class="gallery-item"><div class="gallery-thumb g3"></div></div>
+        <div class="gallery-item"><div class="gallery-thumb g4"></div></div>
+        <div class="gallery-item"><div class="gallery-thumb g5"></div></div>
+    </div>
+</section>
+
+<!-- local cuisine -->
+<section class="cuisine-section">
+    <div class="section-label">Food Culture</div>
+    <div class="section-title">Taste Mindanao</div>
+    <div class="cuisine-grid">
+        <div class="cuisine-card">
+            <span class="cuisine-emoji"></span>
+            <div class="cuisine-name">Satti</div>
+            <div class="cuisine-origin">Zamboanga · Breakfast</div>
+        </div>
+        <div class="cuisine-card">
+            <span class="cuisine-emoji"></span>
+            <div class="cuisine-name">Durian Candy</div>
+            <div class="cuisine-origin">Davao · Delicacy</div>
+        </div>
+        <div class="cuisine-card">
+            <span class="cuisine-emoji"></span>
+            <div class="cuisine-name">Tiyula Itum</div>
+            <div class="cuisine-origin">Maguindanao · Soup</div>
+        </div>
+        <div class="cuisine-card">
+            <span class="cuisine-emoji"></span>
+            <div class="cuisine-name">Pastil</div>
+            <div class="cuisine-origin">Cotabato · Street Food</div>
+        </div>
+    </div>
+</section>
+
+<!-- events and festivals -->
+<section class="section" style="background:#fff">
+    <div class="section-label">Festivals & Events</div>
+    <div class="section-title">Upcoming Events<br>in Mindanao</div>
+    <div class="events-row">
+        <div class="event-card">
+            <div class="event-date"><i class="fa-solid fa-calendar-days"></i>August 2025</div>
+            <div class="event-name">Kadayawan Festival</div>
+            <div class="event-loc"><i class="fa-solid fa-location-dot"></i> Davao City</div>
+        </div>
+        <div class="event-card">
+            <div class="event-date"><i class="fa-solid fa-calendar-days"></i>October 2025</div>
+            <div class="event-name">Shariff Kabunsuan Festival</div>
+            <div class="event-loc"><i class="fa-solid fa-location-dot"></i> Cotabato City</div>
+        </div>
+        <div class="event-card">
+            <div class="event-date"><i class="fa-solid fa-calendar-days"></i> December 2025</div>
+            <div class="event-name">Zamboanga Hermosa Festival</div>
+            <div class="event-loc"><i class="fa-solid fa-location-dot"></i> Zamboanga City</div>
+        </div>
+    </div>
+</section>
+
+<!-- safety advisories -->
+<section class="advisory-section">
+    <div class="section-label">Travel Safety</div>
+    <div class="section-title">Safety Advisories</div>
+    <div class="advisory-list">
+        <div class="advisory-item">
+            <div class="advisory-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <div class="advisory-title">Typhoon Season Alert — Eastern Mindanao</div>
+                <div class="advisory-desc">November to February may bring heavy rainfall in coastal areas. Travelers should monitor PAGASA advisories and prepare for possible disruptions.</div>
+            </div>
+        </div>
+        <div class="advisory-item">
+            <div class="advisory-icon">🛡</div>
+            <div>
+                <div class="advisory-title">Travel Advisory — BARMM Areas</div>
+                <div class="advisory-desc">Certain areas in the Bangsamoro Autonomous Region require coordination with local authorities. Check latest government travel guidelines before visiting.</div>
+            </div>
+        </div>
+        <div class="advisory-item">
+            <div class="advisory-icon"><i class="fa-solid fa-info"></i></div>
+            <div>
+                <div class="advisory-title">General Health Reminder</div>
+                <div class="advisory-desc">Bring necessary medications when traveling to remote areas. Some locations have limited medical facilities. Prepare a basic first-aid kit.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- feedback -->
+<section class="feedback-section">
+    <div class="feedback-inner">
+        <div class="section-label">Your Thoughts</div>
+        <div class="section-title">Share Your Feedback</div>
+        <form class="feedback-form" onsubmit="return false">
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Name</label>
+                    <input type="text" placeholder="Name...">
+                </div>
+                <div class="form-field">
+                    <label>Email</label>
+                    <input type="email" placeholder="Email...">
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Message</label>
+                <textarea placeholder="Tell us about your Mindanao experience..."></textarea>
+            </div>
+            <button class="submit-btn">Submit Feedback →</button>
+        </form>
+    </div>
+</section>
+
+<!-- footer -->
+<footer>
+    <div class="footer-brand">
+        <div class="logo">Minda<span>Now</span></div>
+        <p>Your trusted guide to Mindanao's finest destinations, culture, and travel experiences.</p>
+    </div>
+    <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="#">Destinations</a>
+        <a href="#">Interactive Map</a>
+        <a href="#">Gallery</a>
+        <a href="#">Blog</a>
+    </div>
+    <div class="footer-col">
+        <h4>Discover</h4>
+        <a href="#">Local Cuisine</a>
+        <a href="#">Festivals</a>
+        <a href="#">Events</a>
+        <a href="#">Advisories</a>
+    </div>
+    <div class="footer-col">
+        <h4>Info</h4>
+        <a href="#">About</a>
+        <a href="#">Feedback</a>
+        <a href="#">Contact</a>
+    </div>
+    
+</footer>
+<div class="footer-bottom">
+    <span>© 2026 MindaNow. All rights reserved.</span>
+    <span>Built for Mindanao Tourism</span>
+</div>
+
+<script>
+  // Initialize the map centered on Mindanao
+  var map = L.map('mindanao-map', {
+    center: [7.8731, 125.0565],  // center of Mindanao
+    zoom: 7,
+    minZoom: 6,
+    maxZoom: 13,
+    // Lock the map so it stays on Mindanao only
+    maxBounds: [
+      [4.5, 121.5],   // Southwest corner
+      [10.5, 127.5]   // Northeast corner
+    ],
+    maxBoundsViscosity: 1.0
+  });
+
+  // Add the map tiles (OpenStreetMap - free)
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+    attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors'
+  }).addTo(map);
+  
+
+  // Custom marker style
+  var customIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:14px;height:14px;background:#d4a253;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+  });
+
+  // Destinations data
+  var destinations = [
+    {
+      name: "Gumasa Beach",
+      location: "Sarangani Province",
+      type: "Beach",
+      lat: 5.9833,
+      lng: 125.1833,
+      color: "#74c69d"
+    },
+    {
+      name: "Mount Apo",
+      location: "Cotabato / Davao",
+      type: "Mountain",
+      lat: 6.9897,
+      lng: 125.2707,
+      color: "#d4a253"
+    },
+    {
+      name: "Eden Nature Park",
+      location: "Davao City",
+      type: "Nature",
+      lat: 7.1833,
+      lng: 125.4167,
+      color: "#74c69d"
+    },
+    {
+      name: "Fort Pilar Shrine",
+      location: "Zamboanga City",
+      type: "Cultural",
+      lat: 6.9100,
+      lng: 122.0750,
+      color: "#c25e35"
+    },
+    {
+      name: "Limunsudan Falls",
+      location: "Bukidnon",
+      type: "Waterfall",
+      lat: 8.3833,
+      lng: 124.8500,
+      color: "#2d6a4f"
+    }
+  ];
+
+  // Loop through destinations and add markers
+  destinations.forEach(function(dest) {
+
+    // Custom colored marker per destination
+    var icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:14px;height:14px;
+        background:${dest.color};
+        border-radius:50%;
+        border:3px solid #fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.4)
+      "></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+
+    // Add marker to map
+    var marker = L.marker([dest.lat, dest.lng], { icon: icon }).addTo(map);
+
+    // Popup that shows when marker is clicked
+    marker.bindPopup(`
+      <div style="font-family:'DM Sans',sans-serif; min-width:160px;">
+        <strong style="color:#1a3a2a;font-size:0.95rem;">${dest.name}</strong><br>
+        <span style="font-size:0.78rem;color:#888;">📍 ${dest.location}</span><br>
+        <span style="font-size:0.75rem;color:#2d6a4f;font-weight:600;">${dest.type}</span><br><br>
+        <a href="#" style="
+          background:#1a3a2a;color:#fff;
+          padding:0.4rem 0.8rem;border-radius:2px;
+          font-size:0.75rem;text-decoration:none;
+          font-weight:600;letter-spacing:1px;
+        ">View Destination →</a>
+      </div>
+    `);
+  });
+</script>
+
+</body>
+</html>
